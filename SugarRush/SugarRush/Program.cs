@@ -14,11 +14,12 @@ namespace SugarRush
             //run through .csproj files for the HintPaths
             //run through /packages.config files for the package 
             //run through .dll.refresh files
-            //Logger
 
             try
             {
-                var config = GetConfiguration();
+                var handler = new SugarRushHandler();
+
+                var config = handler.GetConfiguration();
 
                 if (config.IsInvalid)
                 {
@@ -26,11 +27,11 @@ namespace SugarRush
                     return;
                 }
 
-                var projFiles = new DirectoryInfo(config.folderPath).GetFiles("*.csproj", SearchOption.AllDirectories);
+                var projFiles = handler.GetCsProjFiles(config.folderPath);
 
-                var filteredProjFiles = FilterFiles(projFiles, config.exclusionPaths).ToList();
+                var filteredProjFiles = handler.FilterFiles(projFiles, config.exclusionPaths).ToList();
 
-                var package = GetPackage(config);
+                var package = handler.GetPackage(config);
 
                 if (package == null)
                 {
@@ -38,7 +39,7 @@ namespace SugarRush
                     return;
                 }
 
-                var assReferences = package.AssemblyReferences.Select(x => (PhysicalPackageAssemblyReference)x);
+                var assReferences = package.AssemblyReferences.Select(x => (PhysicalPackageAssemblyReference) x);
 
                 //var path = assReference.SourcePath;
 
@@ -48,23 +49,6 @@ namespace SugarRush
             {
                 Logc(String.Format("Something went wrong: Message: {0}, StackTrace: {1} ", exc.Message, exc.StackTrace));
             }
-        }
-
-        private static IPackage GetPackage(SugarRushConfiguration config)
-        {
-            return GetPackages(config).Where(p => p.Version.ToString() == config.packageVersion).FirstOrDefault();
-        }
-
-        private static IEnumerable<IPackage> GetPackages(SugarRushConfiguration config)
-        {
-            var repo = PackageRepositoryFactory.Default.CreateRepository(config.nugetRepoUrl);
-
-            return repo.FindPackagesById(config.packageID);
-        }
-
-        private static IEnumerable<FileInfo> FilterFiles(FileInfo[] files, HashSet<string> exclusionPaths)
-        {
-            return files.Where(file => !exclusionPaths.Contains(file.DirectoryName));
         }
 
         private static void Logc(string message)
@@ -86,55 +70,6 @@ namespace SugarRush
             {
                 tw.WriteLine(DateTime.Now + ": " + message);
             }
-        }
-
-        private static SugarRushConfiguration GetConfiguration()
-        {
-            var config = new SugarRushConfiguration {
-                folderPath = ConfigurationManager.AppSettings["folderPath"],
-                exclusionPaths = new HashSet<string>(ConfigurationManager.AppSettings["exclusionPaths"].Split(',')),
-                packageID = ConfigurationManager.AppSettings["packageID"],
-                packageVersion = ConfigurationManager.AppSettings["packageVersion"],
-                nugetRepoUrl = ConfigurationManager.AppSettings["nugetRepoUrl"]
-            };
-
-            return ValidateConfiguration(ref config);
-        }
-
-        private static SugarRushConfiguration ValidateConfiguration(ref SugarRushConfiguration config)
-        {
-            var errorMessages = new List<string>();
-
-            if (config.folderPath.IsEmpty())
-                errorMessages.Add("Missing folderPath");
-
-            if (config.packageID.IsEmpty())
-                errorMessages.Add("Missing packageID");
-
-            if (config.packageVersion.IsEmpty())
-                errorMessages.Add("Missing packageVersion");
-
-            if (config.nugetRepoUrl.IsEmpty())
-                errorMessages.Add("Missing nugetRepoUrl");
-
-            if (!errorMessages.IsEmpty())
-            {
-                config.IsInvalid = true;
-                config.Message = string.Join(",", errorMessages);
-            }
-
-            return config;
-        }
-
-        public class SugarRushConfiguration
-        {
-            public string folderPath { get; set; }
-            public HashSet<string> exclusionPaths { get; set; }
-            public string packageID { get; set; }
-            public string packageVersion { get; set; }
-            public string nugetRepoUrl { get; set; }
-            public bool IsInvalid { get; set; }
-            public string Message { get; set; }
         }
     }
 }

@@ -50,8 +50,19 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="UnitTest1.cs" />
+    <Compile Include="TextReplacementTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SugarRush\SugarRush.csproj">
+      <Project>{6df9dd08-f0f2-4492-abf5-b6963110c73c}</Project>
+      <Name>SugarRush</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\CsProjExamples\CsProjOnlyUpdateHintPath.csproj" />
+    <Content Include="Resources\CsProjExamples\CsProjExample1.csproj" />
+    <Content Include="Resources\CsProjExamples\CsProjUpdateHintPathAndReferenceVersion.csproj" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

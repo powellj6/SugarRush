@@ -9,7 +9,7 @@ namespace SugarRushTests
         [TestMethod]
         public void ShouldUpdateHintPathVersionsInCsProjFile()
         {
-
+            
         }
 
         [TestMethod]
