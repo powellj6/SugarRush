@@ -5,6 +5,8 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SugarRush", "SugarRush\SugarRush.csproj", "{6DF9DD08-F0F2-4492-ABF5-B6963110C73C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SugarRushTests", "SugarRushTests\SugarRushTests.csproj", "{AA5E4D71-3865-4C24-9CA5-F61ED34A978B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{6DF9DD08-F0F2-4492-ABF5-B6963110C73C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6DF9DD08-F0F2-4492-ABF5-B6963110C73C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6DF9DD08-F0F2-4492-ABF5-B6963110C73C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AA5E4D71-3865-4C24-9CA5-F61ED34A978B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AA5E4D71-3865-4C24-9CA5-F61ED34A978B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AA5E4D71-3865-4C24-9CA5-F61ED34A978B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AA5E4D71-3865-4C24-9CA5-F61ED34A978B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
