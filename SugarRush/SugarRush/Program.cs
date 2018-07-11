@@ -17,9 +17,7 @@ namespace SugarRush
 
             try
             {
-                var handler = new SugarRushHandler();
-
-                var config = handler.GetConfiguration();
+                var config = SugarRushHandler.GetConfiguration();
 
                 if (config.IsInvalid)
                 {
@@ -27,11 +25,11 @@ namespace SugarRush
                     return;
                 }
 
-                var projFiles = handler.GetCsProjFiles(config.folderPath);
+                var projFiles = SugarRushHandler.GetCsProjFiles(config.folderPath);
 
-                var filteredProjFiles = handler.FilterFiles(projFiles, config.exclusionPaths).ToList();
+                var filteredProjFiles = SugarRushHandler.FilterFiles(projFiles, config.exclusionPaths).ToList();
 
-                var package = handler.GetPackage(config);
+                var package = SugarRushHandler.GetPackage(config);
 
                 if (package == null)
                 {
