@@ -39,9 +39,9 @@ namespace SugarRush
 
                 var assReferences = package.AssemblyReferences.Select(x => (PhysicalPackageAssemblyReference) x);
 
-                //var path = assReference.SourcePath;
+                var path = assReferences.First().SourcePath;
 
-                //var name = System.Reflection.AssemblyName.GetAssemblyName(path);
+                var name = System.Reflection.AssemblyName.GetAssemblyName(path);
             }
             catch (Exception exc)
             {

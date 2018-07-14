@@ -136,6 +136,9 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AjaxControlToolkit, Version=3.0.30512.17815, Culture=neutral, PublicKeyToken=28f01b0e84b6d53e">
+      <HintPath>..\..\..\packages\Domain.NettiersDAL.1.0.339\lib\net451\Domain.Data.dll</HintPath>
+    </Reference>
     <Reference Include="Domain.Api.ClientLibrary, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\packages\Domain.Api.ClientLibrary.1.0.0\lib\net451\Domain.Api.ClientLibrary.dll</HintPath>
