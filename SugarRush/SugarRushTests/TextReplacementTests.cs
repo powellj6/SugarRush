@@ -28,13 +28,25 @@ namespace SugarRushTests
         }
 
         [TestMethod]
-        public void ShouldUpdateHintPathVersionsInCsProjFile()
+        public void ShouldUpdateHintPathInCsProjFile()
         {
             var docToUpdate = GetXmlDoc("CsProjExample1.csproj");
             var expectedDoc = GetXmlDoc("CsProjOnlyUpdateHintPath.csproj");
             var list = GetAssemblyNames(_dir + @"\Resources\DLLs\AjaxControlToolkit.dll");
 
             SugarRushHandler.UpdateCsProjFile(ref docToUpdate, "Domain.NettiersDAL.1.0.339", "Domain.NettiersDAL.1.0.340", list);
+
+            Assert.AreEqual(expectedDoc.OuterXml, docToUpdate.OuterXml);
+        }
+
+        [TestMethod]
+        public void ShouldUpdateHintPathAndReferenceVersionsInCsProjFile()
+        {
+            var docToUpdate = GetXmlDoc("CsProjExample1.csproj");
+            var expectedDoc = GetXmlDoc("CsProjUpdateHintPathAndReferenceVersion.csproj");
+            var list = GetAssemblyNames(_dir + @"\Resources\DLLs\Couchbase.dll", _dir + @"\Resources\DLLs\Enyim.Caching.dll");
+
+            SugarRushHandler.UpdateCsProjFile(ref docToUpdate, "CouchbaseNetClient.1.3.9", "CouchbaseNetClient.1.3.10", list);
 
             Assert.AreEqual(expectedDoc.OuterXml, docToUpdate.OuterXml);
         }
