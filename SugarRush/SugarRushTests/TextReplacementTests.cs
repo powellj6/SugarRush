@@ -30,21 +30,13 @@ namespace SugarRushTests
         [TestMethod]
         public void ShouldUpdateHintPathVersionsInCsProjFile()
         {
-            var file = SugarRushHandler.GetCsProjFiles(_dir).Where(x => x.Name == "CsProjExample1.csproj").First();
-            var doc = new XmlDocument();
-            doc.Load(file.FullName);
+            var docToUpdate = GetXmlDoc("CsProjExample1.csproj");
+            var expectedDoc = GetXmlDoc("CsProjOnlyUpdateHintPath.csproj");
+            var list = GetAssemblyNames(_dir + @"\Resources\DLLs\AjaxControlToolkit.dll");
 
-            var expectedFile = SugarRushHandler.GetCsProjFiles(_dir).Where(x => x.Name == "CsProjOnlyUpdateHintPath.csproj").First();
-            var expectedDoc = new XmlDocument();
-            expectedDoc.Load(expectedFile.FullName);
+            SugarRushHandler.UpdateCsProjFile(ref docToUpdate, "Domain.NettiersDAL.1.0.339", "Domain.NettiersDAL.1.0.340", list);
 
-            var list = new List<AssemblyName> {
-                AssemblyName.GetAssemblyName(_dir + @"\Resources\DLLs\AjaxControlToolkit.dll")
-            };
-
-            SugarRushHandler.UpdateCsProjFile(ref doc, "Domain.NettiersDAL.1.0.339", "Domain.NettiersDAL.1.0.340", list);
-
-            Assert.AreEqual(expectedDoc.OuterXml, doc.OuterXml);
+            Assert.AreEqual(expectedDoc.OuterXml, docToUpdate.OuterXml);
         }
 
         [TestMethod]
@@ -57,6 +49,20 @@ namespace SugarRushTests
         public void ShouldUpdateVersionInRefreshFile()
         {
 
+        }
+
+        private List<AssemblyName> GetAssemblyNames(params string[] paths)
+        {
+            return paths.Select(path => AssemblyName.GetAssemblyName(path)).ToList();
+        }
+
+        private XmlDocument GetXmlDoc(string fileName)
+        {
+            var file = SugarRushHandler.GetCsProjFiles(_dir).Where(f => f.Name == fileName).First();
+            var doc = new XmlDocument();
+            doc.Load(file.FullName);
+
+            return doc;
         }
     }
 }
