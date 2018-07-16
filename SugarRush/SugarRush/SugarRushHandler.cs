@@ -13,7 +13,7 @@ namespace SugarRush
 {
     public static class SugarRushHandler
     {
-        public static XmlDocument UpdateCsProjFile(XmlDocument doc, string oldPackageVersion, string newPackageVersion, List<System.Reflection.AssemblyName> assemblies)
+        public static XmlDocument UpdateCsProjFile(ref XmlDocument doc, string oldPackageVersion, string newPackageVersion, List<System.Reflection.AssemblyName> assemblies)
         {
             XmlNamespaceManager xnManager = new XmlNamespaceManager(doc.NameTable);
             xnManager.AddNamespace("ns", "http://schemas.microsoft.com/developer/msbuild/2003");

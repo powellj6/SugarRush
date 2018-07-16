@@ -31,25 +31,20 @@ namespace SugarRushTests
         public void ShouldUpdateHintPathVersionsInCsProjFile()
         {
             var file = SugarRushHandler.GetCsProjFiles(_dir).Where(x => x.Name == "CsProjExample1.csproj").First();
-
-            var originalDoc = new XmlDocument();
-            originalDoc.Load(file.FullName);
-
-
             var doc = new XmlDocument();
             doc.Load(file.FullName);
+
+            var expectedFile = SugarRushHandler.GetCsProjFiles(_dir).Where(x => x.Name == "CsProjOnlyUpdateHintPath.csproj").First();
+            var expectedDoc = new XmlDocument();
+            expectedDoc.Load(expectedFile.FullName);
 
             var list = new List<AssemblyName> {
                 AssemblyName.GetAssemblyName(_dir + @"\Resources\DLLs\AjaxControlToolkit.dll")
             };
 
-            var updatedDoc = SugarRushHandler.UpdateCsProjFile(doc, "Domain.NettiersDAL.1.0.339", "Domain.NettiersDAL.1.0.340", list);
+            SugarRushHandler.UpdateCsProjFile(ref doc, "Domain.NettiersDAL.1.0.339", "Domain.NettiersDAL.1.0.340", list);
 
-
-            updatedDoc.Save(file.FullName);
-
-            //TODO: Actually compare
-            Assert.AreNotEqual(doc, updatedDoc);
+            Assert.AreEqual(expectedDoc.OuterXml, doc.OuterXml);
         }
 
         [TestMethod]
