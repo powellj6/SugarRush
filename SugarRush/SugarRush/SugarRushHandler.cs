@@ -103,7 +103,12 @@ namespace SugarRush
 
         public static FileInfo[] GetCsProjFiles(string folderPath)
         {
-            return new DirectoryInfo(folderPath).GetFiles("*.csproj", SearchOption.AllDirectories);
+            return GetFiles(folderPath, "*.csproj");
+        }
+
+        public static FileInfo[] GetFiles(string folderPath, string extension)
+        {
+            return new DirectoryInfo(folderPath).GetFiles(extension, SearchOption.AllDirectories);
         }
 
         public class PackageWithAssemblies

@@ -8,10 +8,10 @@ namespace SugarRush
 {
     public static class Extensions
     {
-        public static string Replace(this string originalString, string snippetToReplace, string replaceValue)
+        public static string Replace(this string originalString, string stringToReplace, string replaceValue)
         {
-            var startIndex = originalString.IndexOf(snippetToReplace);
-            var removeCount = snippetToReplace.Length;
+            var startIndex = originalString.IndexOf(stringToReplace);
+            var removeCount = stringToReplace.Length;
 
             return originalString.Remove(startIndex, removeCount).Insert(startIndex, replaceValue);
         }

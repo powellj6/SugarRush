@@ -16,13 +16,25 @@ namespace SugarRushTests
         string _dir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
 
         [TestMethod]
-        public void ShouldGetAllFilesInDirNotExcluded()
+        public void ShouldGetAllNotExcludedFilesInDir()
         {
+            var exclusionPaths = new HashSet<string> { _dir + @"\Resources\Files\FilesSub" };
 
+            var files = SugarRushHandler.GetFiles(_dir + @"\Resources\Files\", "*.txt");
+            var excludedFiles = SugarRushHandler.FilterFiles(files, exclusionPaths);
+
+            Assert.IsTrue(excludedFiles.Count() == 3);
         }
 
         [TestMethod]
         public void ShouldGetAllFilesInDir()
+        {
+            var files = SugarRushHandler.GetFiles(_dir + @"\Resources\Files\", "*.txt");
+
+            Assert.IsTrue(files.Length == 5);
+        }
+
+        public void ShouldValidateConfiguration()
         {
 
         }
@@ -30,25 +42,25 @@ namespace SugarRushTests
         [TestMethod]
         public void ShouldUpdateHintPathInCsProjFile()
         {
-            var docToUpdate = GetXmlDoc("CsProjExample1.csproj");
+            var updatedDoc = GetXmlDoc("CsProjExample1.csproj");
             var expectedDoc = GetXmlDoc("CsProjOnlyUpdateHintPath.csproj");
             var list = GetAssemblyNames(_dir + @"\Resources\DLLs\AjaxControlToolkit.dll");
 
-            SugarRushHandler.UpdateCsProjFile(ref docToUpdate, "Domain.NettiersDAL.1.0.339", "Domain.NettiersDAL.1.0.340", list);
+            SugarRushHandler.UpdateCsProjFile(ref updatedDoc, "Domain.NettiersDAL.1.0.339", "Domain.NettiersDAL.1.0.340", list);
 
-            Assert.AreEqual(expectedDoc.OuterXml, docToUpdate.OuterXml);
+            Assert.AreEqual(expectedDoc.OuterXml, updatedDoc.OuterXml);
         }
 
         [TestMethod]
         public void ShouldUpdateHintPathAndReferenceVersionsInCsProjFile()
         {
-            var docToUpdate = GetXmlDoc("CsProjExample1.csproj");
+            var updatedDoc = GetXmlDoc("CsProjExample1.csproj");
             var expectedDoc = GetXmlDoc("CsProjUpdateHintPathAndReferenceVersion.csproj");
             var list = GetAssemblyNames(_dir + @"\Resources\DLLs\Couchbase.dll", _dir + @"\Resources\DLLs\Enyim.Caching.dll");
 
-            SugarRushHandler.UpdateCsProjFile(ref docToUpdate, "CouchbaseNetClient.1.3.9", "CouchbaseNetClient.1.3.10", list);
+            SugarRushHandler.UpdateCsProjFile(ref updatedDoc, "CouchbaseNetClient.1.3.9", "CouchbaseNetClient.1.3.10", list);
 
-            Assert.AreEqual(expectedDoc.OuterXml, docToUpdate.OuterXml);
+            Assert.AreEqual(expectedDoc.OuterXml, updatedDoc.OuterXml);
         }
 
         [TestMethod]
