@@ -1,19 +1,16 @@
 ﻿using SugarRush;
-using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Xml;
-using System.Xml.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace SugarRushTests
 {
     [TestClass]
-    public class TextReplacementTests
+    public class SugarRushHandlerTests
     {
-        string _dir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+        string _dir = Helper.GetExecutingAssemblyDirectory();
 
         [TestMethod]
         public void ShouldGetAllNotExcludedFilesInDir()
@@ -34,9 +31,19 @@ namespace SugarRushTests
             Assert.IsTrue(files.Length == 5);
         }
 
+        [TestMethod]
         public void ShouldValidateConfiguration()
         {
+            var config = new SugarRushConfiguration {
+                folderPath = @"C:\Some\Random\Bull",
+                nugetRepoUrl = "SomeBullRepo.com",
+                packageID = "SomePackage",
+                packageVersion = "SomePackage-1.2.3"
+            };
 
+            SugarRush.SugarRushHandler.ValidateConfiguration(ref config);
+
+            Assert.IsFalse(config.IsInvalid);
         }
 
         [TestMethod]
