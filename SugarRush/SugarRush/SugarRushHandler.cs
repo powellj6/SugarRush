@@ -11,34 +11,55 @@ using NuGet;
 
 namespace SugarRush
 {
+    //TODO:
+    //text replacement logic will break down if there are multiple versions installed. Need to "replace the text" on the spot
     public static class SugarRushHandler
     {
-        public static XmlDocument UpdateCsProjFile(ref XmlDocument doc, string oldPackageVersion, string newPackageVersion, List<System.Reflection.AssemblyName> assemblies)
+        public static XmlDocument UpdateCsProjFile(this XmlDocument doc, string oldPackageVersion, string newPackageVersion, 
+            Dictionary<string, System.Reflection.AssemblyName> assDic)
         {
             XmlNamespaceManager xnManager = new XmlNamespaceManager(doc.NameTable);
             xnManager.AddNamespace("ns", "http://schemas.microsoft.com/developer/msbuild/2003");
 
             var referenceNodes = doc.SelectNodes("//ns:Reference", xnManager);
 
-            //TODO: Turn assemblies into a Dictionary to prevent iterating over and over again
             foreach (XmlElement node in referenceNodes)
             {
                 var includeAttribute = node.Attributes["Include"];
 
                 if (includeAttribute != null)
                 {
-                    var packageID = includeAttribute.InnerText.Split(new char[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries)[0];
+                    var packageID = GetPackageIdFromIncludeAttribute(includeAttribute);
 
-                    var ass = assemblies.Where(a => a.Name == packageID).FirstOrDefault();
-                    if (ass == null)
+                    System.Reflection.AssemblyName ass;
+
+                    if (!assDic.TryGetValue(packageID, out ass))
                         continue;
 
-                    var hintPath = node.GetElementsByTagName("HintPath")[0];
+                    var hintPath = node.GetElementsByTagName("HintPath")?[0];
                     if (hintPath == null)
                         continue;
 
                     includeAttribute.InnerText = ass.FullName;
                     hintPath.InnerText = hintPath.InnerText.Replace(oldPackageVersion, newPackageVersion);
+                }
+            }
+
+            return doc;
+        }
+
+        public static XmlDocument UpdatePackageConfig(this XmlDocument doc, string packageID, string packageVersion)
+        {
+            var packageNodes = doc.SelectNodes("//package");
+            
+            foreach (XmlElement node in packageNodes)
+            {
+                var id = node.Attributes["id"]?.InnerText;
+
+                if (id == packageID)
+                {
+                    var version = node.Attributes["version"];
+                    version.InnerText = packageVersion;
                 }
             }
 
@@ -111,9 +132,9 @@ namespace SugarRush
             return new DirectoryInfo(folderPath).GetFiles(extension, SearchOption.AllDirectories);
         }
 
-        public class PackageWithAssemblies
+        private static string GetPackageIdFromIncludeAttribute(XmlAttribute includeAttribute)
         {
-
+            return includeAttribute.InnerText.Split(new char[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries)[0];
         }
     }
 }
