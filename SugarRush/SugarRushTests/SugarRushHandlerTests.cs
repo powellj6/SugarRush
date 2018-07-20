@@ -54,7 +54,7 @@ namespace SugarRushTests
             var assList = GetAssemblyNames(_dir + @"\Resources\DLLs\AjaxControlToolkit.dll");
             var assDic = assList.ToDictionary(k => k.Name, v => v);
 
-            updatedDoc.UpdateCsProjFile("Domain.NettiersDAL.1.0.339", "Domain.NettiersDAL.1.0.340", assDic);
+            updatedDoc.UpdateCsProjFile("Domain.NettiersDAL.1.0.340", assDic);
 
             Assert.AreEqual(expectedDoc.OuterXml, updatedDoc.OuterXml);
         }
@@ -67,7 +67,7 @@ namespace SugarRushTests
             var assList = GetAssemblyNames(_dir + @"\Resources\DLLs\Couchbase.dll", _dir + @"\Resources\DLLs\Enyim.Caching.dll");
             var assDic = assList.ToDictionary(k => k.Name, v => v);
 
-            updatedDoc.UpdateCsProjFile("CouchbaseNetClient.1.3.9", "CouchbaseNetClient.1.3.10", assDic);
+            updatedDoc.UpdateCsProjFile("CouchbaseNetClient.1.3.10", assDic);
 
             Assert.AreEqual(expectedDoc.OuterXml, updatedDoc.OuterXml);
         }

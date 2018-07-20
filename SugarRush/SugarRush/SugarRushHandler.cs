@@ -11,11 +11,9 @@ using NuGet;
 
 namespace SugarRush
 {
-    //TODO:
-    //text replacement logic will break down if there are multiple versions installed. Need to "replace the text" on the spot
     public static class SugarRushHandler
     {
-        public static XmlDocument UpdateCsProjFile(this XmlDocument doc, string oldPackageVersion, string newPackageVersion, 
+        public static XmlDocument UpdateCsProjFile(this XmlDocument doc, string newPackageWithVersion, 
             Dictionary<string, System.Reflection.AssemblyName> assDic)
         {
             XmlNamespaceManager xnManager = new XmlNamespaceManager(doc.NameTable);
@@ -29,19 +27,23 @@ namespace SugarRush
 
                 if (includeAttribute != null)
                 {
-                    var packageID = GetPackageIdFromIncludeAttribute(includeAttribute);
+                    var currentPackageID = GetPackageIdFromIncludeAttribute(includeAttribute);
 
                     System.Reflection.AssemblyName ass;
 
-                    if (!assDic.TryGetValue(packageID, out ass))
+                    if (!assDic.TryGetValue(currentPackageID, out ass))
                         continue;
 
                     var hintPath = node.GetElementsByTagName("HintPath")?[0];
                     if (hintPath == null)
                         continue;
 
+                    var reg = System.Text.RegularExpressions.Regex.Match(hintPath.InnerText, @"\\packages\\(?<packageWithVersion>.*?)\\lib");
+
+                    var oldPackageWithVersion = reg.Groups["packageWithVersion"].Value;
+
                     includeAttribute.InnerText = ass.FullName;
-                    hintPath.InnerText = hintPath.InnerText.Replace(oldPackageVersion, newPackageVersion);
+                    hintPath.InnerText = hintPath.InnerText.Replace(oldPackageWithVersion, newPackageWithVersion);
                 }
             }
 
