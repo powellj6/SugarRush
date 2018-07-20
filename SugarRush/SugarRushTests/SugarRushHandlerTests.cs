@@ -51,9 +51,10 @@ namespace SugarRushTests
         {
             var updatedDoc = GetXmlDoc("CsProjExample1.csproj");
             var expectedDoc = GetXmlDoc("CsProjOnlyUpdateHintPath.csproj");
-            var list = GetAssemblyNames(_dir + @"\Resources\DLLs\AjaxControlToolkit.dll");
+            var assList = GetAssemblyNames(_dir + @"\Resources\DLLs\AjaxControlToolkit.dll");
+            var assDic = assList.ToDictionary(k => k.Name, v => v);
 
-            SugarRushHandler.UpdateCsProjFile(ref updatedDoc, "Domain.NettiersDAL.1.0.339", "Domain.NettiersDAL.1.0.340", list);
+            updatedDoc.UpdateCsProjFile("Domain.NettiersDAL.1.0.340", assDic);
 
             Assert.AreEqual(expectedDoc.OuterXml, updatedDoc.OuterXml);
         }
@@ -63,9 +64,10 @@ namespace SugarRushTests
         {
             var updatedDoc = GetXmlDoc("CsProjExample1.csproj");
             var expectedDoc = GetXmlDoc("CsProjUpdateHintPathAndReferenceVersion.csproj");
-            var list = GetAssemblyNames(_dir + @"\Resources\DLLs\Couchbase.dll", _dir + @"\Resources\DLLs\Enyim.Caching.dll");
+            var assList = GetAssemblyNames(_dir + @"\Resources\DLLs\Couchbase.dll", _dir + @"\Resources\DLLs\Enyim.Caching.dll");
+            var assDic = assList.ToDictionary(k => k.Name, v => v);
 
-            SugarRushHandler.UpdateCsProjFile(ref updatedDoc, "CouchbaseNetClient.1.3.9", "CouchbaseNetClient.1.3.10", list);
+            updatedDoc.UpdateCsProjFile("CouchbaseNetClient.1.3.10", assDic);
 
             Assert.AreEqual(expectedDoc.OuterXml, updatedDoc.OuterXml);
         }
@@ -73,7 +75,12 @@ namespace SugarRushTests
         [TestMethod]
         public void ShouldUpdatePackageVersionInPackagesConfig()
         {
+            var updatedDoc = GetXmlDoc("PackageConfigExample1.config");
+            var expectedDoc = GetXmlDoc("PackageConfigUpdatePackageVersion.config");
 
+            updatedDoc.UpdatePackageConfig("CouchbaseNetClient", "1.3.10");
+
+            Assert.AreEqual(expectedDoc.OuterXml, updatedDoc.OuterXml);
         }
 
         [TestMethod]
@@ -89,7 +96,7 @@ namespace SugarRushTests
 
         private XmlDocument GetXmlDoc(string fileName)
         {
-            var file = SugarRushHandler.GetCsProjFiles(_dir).Where(f => f.Name == fileName).First();
+            var file = SugarRushHandler.GetFiles(_dir, "*").Where(f => f.Name == fileName).First();
             var doc = new XmlDocument();
             doc.Load(file.FullName);
 
