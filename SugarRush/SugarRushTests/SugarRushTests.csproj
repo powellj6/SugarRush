@@ -106,6 +106,14 @@
     <None Include="Resources\PackageConfigExamples\PackageConfigUpdatePackageVersion.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="Resources\RefreshFileExamples\RefreshFileExample1.dll.refresh">
+      <SubType>Component</SubType>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\RefreshFileExamples\RefreshFileUpdatePackageVersion.dll.refresh">
+      <SubType>Component</SubType>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

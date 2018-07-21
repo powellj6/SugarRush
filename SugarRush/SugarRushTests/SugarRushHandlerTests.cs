@@ -86,7 +86,14 @@ namespace SugarRushTests
         [TestMethod]
         public void ShouldUpdateVersionInRefreshFile()
         {
+            var updatedFile = SugarRushHandler.GetFiles(_dir, "*.refresh").FirstOrDefault(f => f.Name == "RefreshFileExample1.dll.refresh");
+            var expectedFile = SugarRushHandler.GetFiles(_dir, "*.refresh").FirstOrDefault(f => f.Name == "RefreshFileUpdatePackageVersion.dll.refresh");
+            var assList = GetAssemblyNames(_dir + @"\Resources\DLLs\Couchbase.dll", _dir + @"\Resources\DLLs\Enyim.Caching.dll");
+            var assDic = assList.ToDictionary(k => k.Name, v => v);
 
+            updatedFile.UpdateRefreshFile("CouchbaseNetClient.1.3.10", assDic);
+
+            Assert.AreEqual(System.IO.File.ReadAllText(updatedFile.FullName), System.IO.File.ReadAllText(expectedFile.FullName));
         }
 
         private List<AssemblyName> GetAssemblyNames(params string[] paths)

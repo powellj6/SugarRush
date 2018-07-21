@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
@@ -38,9 +39,7 @@ namespace SugarRush
                     if (hintPath == null)
                         continue;
 
-                    var reg = System.Text.RegularExpressions.Regex.Match(hintPath.InnerText, @"\\packages\\(?<packageWithVersion>.*?)\\lib");
-
-                    var oldPackageWithVersion = reg.Groups["packageWithVersion"].Value;
+                    var oldPackageWithVersion = GetPackageWithVersionFromHintPath(hintPath.InnerText);
 
                     includeAttribute.InnerText = ass.FullName;
                     hintPath.InnerText = hintPath.InnerText.Replace(oldPackageWithVersion, newPackageWithVersion);
@@ -66,6 +65,24 @@ namespace SugarRush
             }
 
             return doc;
+        }
+
+        public static FileInfo UpdateRefreshFile(this FileInfo file, string newPackageWithVersion, Dictionary<string, System.Reflection.AssemblyName> assDic)
+        {
+            string text = File.ReadAllText(file.FullName);
+
+            var dllName = GetDllNamefromRefreshFile(text);
+
+            if (assDic.ContainsKey(dllName))
+            {
+                var oldPackageWithVersion = GetPackageWithVersionFromHintPath(text);
+
+                var updatedText = text.Replace(oldPackageWithVersion, newPackageWithVersion);
+
+                File.WriteAllText(file.FullName, updatedText);
+            }
+
+            return file;
         }
 
         public static SugarRushConfiguration GetConfiguration()
@@ -137,6 +154,17 @@ namespace SugarRush
         private static string GetPackageIdFromIncludeAttribute(XmlAttribute includeAttribute)
         {
             return includeAttribute.InnerText.Split(new char[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries)[0];
+        }
+
+        private static string GetPackageWithVersionFromHintPath(string hintPath)
+        {
+            return Regex.Match(hintPath, @"\\packages\\(?<packageWithVersion>.*?)\\lib").Groups["packageWithVersion"].Value;
+        }
+
+        private static string GetDllNamefromRefreshFile(string text)
+        {
+            return Regex.Match(text, @"\\(?<packageID>.*?)\.dll", RegexOptions.RightToLeft)
+                .Groups["packageID"].Value;
         }
     }
 }
