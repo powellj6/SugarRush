@@ -75,8 +75,8 @@ namespace SugarRushTests
         [TestMethod]
         public void ShouldUpdatePackageVersionInPackagesConfig()
         {
-            var updatedDoc = GetXmlDoc("PackageConfigExample1.config");
-            var expectedDoc = GetXmlDoc("PackageConfigUpdatePackageVersion.config");
+            var updatedDoc = GetXmlDoc("PackageConfigExample1.packages.config");
+            var expectedDoc = GetXmlDoc("PackageConfigUpdatePackageVersion.packages.config");
 
             updatedDoc.UpdatePackageConfig("CouchbaseNetClient", "1.3.10");
 

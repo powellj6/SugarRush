@@ -41,8 +41,11 @@ namespace SugarRush
 
                     var oldPackageWithVersion = GetPackageWithVersionFromHintPath(hintPath.InnerText);
 
-                    includeAttribute.InnerText = ass.FullName;
-                    hintPath.InnerText = hintPath.InnerText.Replace(oldPackageWithVersion, newPackageWithVersion);
+                    if (includeAttribute.InnerText.Contains("Version="))
+                        includeAttribute.InnerText = ass.FullName;
+
+                    if (!oldPackageWithVersion.IsEmpty())
+                        hintPath.InnerText = hintPath.InnerText.Replace(oldPackageWithVersion, newPackageWithVersion);
                 }
             }
 
@@ -124,7 +127,7 @@ namespace SugarRush
             return config;
         }
 
-        public static IEnumerable<FileInfo> FilterFiles(FileInfo[] files, HashSet<string> exclusionPaths)
+        public static IEnumerable<FileInfo> FilterFiles(IEnumerable<FileInfo> files, HashSet<string> exclusionPaths)
         {
             return files.Where(file => !exclusionPaths.Contains(file.DirectoryName));
         }
@@ -146,9 +149,27 @@ namespace SugarRush
             return GetFiles(folderPath, "*.csproj");
         }
 
+        public static FileInfo[] GetRefreshFiles(string folderPath)
+        {
+            return GetFiles(folderPath, "*.refresh");
+        }
+
+        public static FileInfo[] GetPackageFiles(string folderPath)
+        {
+            return GetFiles(folderPath, "*packages.config");
+        }
+
         public static FileInfo[] GetFiles(string folderPath, string extension)
         {
             return new DirectoryInfo(folderPath).GetFiles(extension, SearchOption.AllDirectories);
+        }
+
+        public static XmlDocument GetXmlDoc(string fullName)
+        {
+            var doc = new XmlDocument();
+            doc.Load(fullName);
+
+            return doc;
         }
 
         private static string GetPackageIdFromIncludeAttribute(XmlAttribute includeAttribute)

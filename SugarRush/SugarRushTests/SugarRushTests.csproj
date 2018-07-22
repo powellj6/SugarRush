@@ -100,10 +100,10 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\PackageConfigExamples\PackageConfigExample1.config">
+    <None Include="Resources\PackageConfigExamples\PackageConfigExample1.packages.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="Resources\PackageConfigExamples\PackageConfigUpdatePackageVersion.config">
+    <None Include="Resources\PackageConfigExamples\PackageConfigUpdatePackageVersion.packages.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="Resources\RefreshFileExamples\RefreshFileExample1.dll.refresh">

@@ -3,46 +3,66 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
 using NuGet;
 
 namespace SugarRush
 {
     class Program
     {
+        //TODO: Don't update/save file if nothing has changed
+
         static void Main(string[] args)
         {
-            //run through .csproj files for the HintPaths
-            //run through /packages.config files for the package 
-            //run through .dll.refresh files
-
             try
             {
                 var config = SugarRushHandler.GetConfiguration();
 
                 if (config.IsInvalid)
                 {
-                    Console.WriteLine("Invalid configuration: " + config.Message);
+                    Logc("Invalid configuration: " + config.Message);
                     return;
                 }
-
-                var projFiles = SugarRushHandler.GetCsProjFiles(config.folderPath);
-
-                var filteredProjFiles = SugarRushHandler.FilterFiles(projFiles, config.exclusionPaths).ToList();
 
                 var package = SugarRushHandler.GetPackage(config);
 
                 if (package == null)
                 {
-                    Console.WriteLine("Could not find any packages by packageID: " + config.packageID);
+                    Logc("Could not find any packages by packageID: " + config.packageID);
                     return;
                 }
 
+                var projFiles = SugarRushHandler.FilterFiles(SugarRushHandler.GetCsProjFiles(config.folderPath), config.exclusionPaths);
+                var refreshFiles = SugarRushHandler.FilterFiles(SugarRushHandler.GetRefreshFiles(config.folderPath), config.exclusionPaths);
+                var packageFiles = SugarRushHandler.FilterFiles(SugarRushHandler.GetPackageFiles(config.folderPath), config.exclusionPaths);
+
                 var assReferences = package.AssemblyReferences.Select(x => (PhysicalPackageAssemblyReference) x);
 
-                var path = assReferences.First().SourcePath;
+                var assDic = assReferences.Select(x => AssemblyName.GetAssemblyName(x.SourcePath)).ToDictionary(k => k.Name, v => v);
 
-                var name = System.Reflection.AssemblyName.GetAssemblyName(path);
+
+
+                Parallel.ForEach<FileInfo>(projFiles, pf =>
+                {
+                    Console.WriteLine("Updating file: " + pf.Name);
+                    var doc = SugarRushHandler.GetXmlDoc(pf.FullName);
+                    doc.UpdateCsProjFile(config.packageID + "." + config.packageVersion, assDic);
+                    doc.Save(pf.FullName);
+                });
+
+                Parallel.ForEach<FileInfo>(refreshFiles, rf =>
+                {
+                    rf.UpdateRefreshFile(config.packageID + "." + config.packageVersion, assDic);
+                });
+
+                Parallel.ForEach<FileInfo>(packageFiles, pf => {
+                    var doc = SugarRushHandler.GetXmlDoc(pf.FullName);
+                    doc.UpdatePackageConfig(config.packageID, config.packageVersion);
+                    doc.Save(pf.FullName);
+                });
             }
+
             catch (Exception exc)
             {
                 Logc(String.Format("Something went wrong: Message: {0}, StackTrace: {1} ", exc.Message, exc.StackTrace));
