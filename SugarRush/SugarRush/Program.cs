@@ -41,14 +41,11 @@ namespace SugarRush
 
                 var assDic = assReferences.Select(x => AssemblyName.GetAssemblyName(x.SourcePath)).ToDictionary(k => k.Name, v => v);
 
-
-
                 Parallel.ForEach<FileInfo>(projFiles, pf =>
                 {
                     Console.WriteLine("Updating file: " + pf.Name);
                     var doc = SugarRushHandler.GetXmlDoc(pf.FullName);
                     doc.UpdateCsProjFile(config.packageID + "." + config.packageVersion, assDic);
-                    doc.Save(pf.FullName);
                 });
 
                 Parallel.ForEach<FileInfo>(refreshFiles, rf =>
@@ -59,7 +56,6 @@ namespace SugarRush
                 Parallel.ForEach<FileInfo>(packageFiles, pf => {
                     var doc = SugarRushHandler.GetXmlDoc(pf.FullName);
                     doc.UpdatePackageConfig(config.packageID, config.packageVersion);
-                    doc.Save(pf.FullName);
                 });
             }
 
