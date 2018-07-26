@@ -12,6 +12,7 @@ namespace SugarRush
     class Program
     {
         //TODO: Don't update/save file if nothing has changed
+        //TODO: Also, change dir below to somewhere conventionally "temp"
         public static string _packagesFolder = @"C:\Temp\NugetPackages\";
         static void Main(string[] args)
         {
