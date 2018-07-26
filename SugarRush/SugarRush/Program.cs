@@ -3,50 +3,89 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
 using NuGet;
 
 namespace SugarRush
 {
     class Program
     {
+        //TODO: Don't update/save file if nothing has changed
+        //TODO: Also, change dir below to somewhere conventionally "temp"
+        public static string _packagesFolder = @"C:\Temp\NugetPackages\";
         static void Main(string[] args)
         {
-            //run through .csproj files for the HintPaths
-            //run through /packages.config files for the package 
-            //run through .dll.refresh files
-
             try
             {
+                Logc("Getting configuration...");
                 var config = SugarRushHandler.GetConfiguration();
 
                 if (config.IsInvalid)
                 {
-                    Console.WriteLine("Invalid configuration: " + config.Message);
+                    Logc("Invalid configuration: " + config.Message);
                     return;
                 }
 
-                var projFiles = SugarRushHandler.GetCsProjFiles(config.folderPath);
-
-                var filteredProjFiles = SugarRushHandler.FilterFiles(projFiles, config.exclusionPaths).ToList();
-
+                Logc("Getting nuget package...");
                 var package = SugarRushHandler.GetPackage(config);
 
                 if (package == null)
                 {
-                    Console.WriteLine("Could not find any packages by packageID: " + config.packageID);
+                    Logc("Could not find any nuget package by packageID: " + config.packageID);
                     return;
                 }
 
-                var assReferences = package.AssemblyReferences.Select(x => (PhysicalPackageAssemblyReference) x);
+                Logc("Getting csproj files...");
+                var projFiles = SugarRushHandler.FilterFiles(SugarRushHandler.GetCsProjFiles(config.folderPath), config.exclusionPaths);
+                Logc("Getting Refresh files...");
+                var refreshFiles = SugarRushHandler.FilterFiles(SugarRushHandler.GetRefreshFiles(config.folderPath), config.exclusionPaths);
+                Logc("Getting package.config files...");
+                var packageFiles = SugarRushHandler.FilterFiles(SugarRushHandler.GetPackageFiles(config.folderPath), config.exclusionPaths);
 
-                var path = assReferences.First().SourcePath;
+                DownloadNugetPackage(package, config.nugetRepoUrl);
 
-                var name = System.Reflection.AssemblyName.GetAssemblyName(path);
+                var dir = Path.GetFullPath($"{_packagesFolder}\\{package.GetFullName().Replace(' ', '.')}");
+
+                //TODO: Not really using anything in the assembly besides "FullName".
+                //Can probably just have Dictionary<dll name, FullName>
+                var assDic = package.AssemblyReferences
+                    .Select(ar => AssemblyName.GetAssemblyName($"{dir}\\{ar.Path}"))
+                    .ToDictionary(k => k.Name, v => v);
+
+                Parallel.ForEach<FileInfo>(projFiles, pf =>
+                {
+                    Console.WriteLine("Updating file: " + pf.FullName);
+                    var doc = SugarRushHandler.GetXmlDoc(pf.FullName);
+                    doc.UpdateCsProjFile(config.packageID + "." + config.packageVersion, assDic);
+                });
+
+                Parallel.ForEach<FileInfo>(refreshFiles, rf =>
+                {
+                    Console.WriteLine("Updating file: " + rf.FullName);
+                    rf.UpdateRefreshFile(config.packageID + "." + config.packageVersion, assDic);
+                });
+
+                Parallel.ForEach<FileInfo>(packageFiles, pf => {
+                    Console.WriteLine("Updating file: " + pf.FullName);
+                    var doc = SugarRushHandler.GetXmlDoc(pf.FullName);
+                    doc.UpdatePackageConfig(config.packageID, config.packageVersion);
+                });
             }
+
             catch (Exception exc)
             {
                 Logc(String.Format("Something went wrong: Message: {0}, StackTrace: {1} ", exc.Message, exc.StackTrace));
             }
+        }
+
+        private static void DownloadNugetPackage(IPackage package, string repoUrl)
+        {
+            IPackageRepository packageRepository = PackageRepositoryFactory.Default.CreateRepository(repoUrl);
+            PackageManager packageManager = new PackageManager(packageRepository, _packagesFolder);
+            
+
+            packageManager.InstallPackage(package, true, true, true);
         }
 
         private static void Logc(string message)

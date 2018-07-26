@@ -15,8 +15,10 @@ namespace SugarRush
     public static class SugarRushHandler
     {
         public static XmlDocument UpdateCsProjFile(this XmlDocument doc, string newPackageWithVersion, 
-            Dictionary<string, System.Reflection.AssemblyName> assDic)
+            Dictionary<string, System.Reflection.AssemblyName> assDic, bool skipUpdate = false)
         {
+            var shouldUpdate = false;
+
             XmlNamespaceManager xnManager = new XmlNamespaceManager(doc.NameTable);
             xnManager.AddNamespace("ns", "http://schemas.microsoft.com/developer/msbuild/2003");
 
@@ -41,18 +43,32 @@ namespace SugarRush
 
                     var oldPackageWithVersion = GetPackageWithVersionFromHintPath(hintPath.InnerText);
 
-                    includeAttribute.InnerText = ass.FullName;
-                    hintPath.InnerText = hintPath.InnerText.Replace(oldPackageWithVersion, newPackageWithVersion);
+                    if (includeAttribute.InnerText.Contains("Version="))
+                    {
+                        includeAttribute.InnerText = ass.FullName;
+                        shouldUpdate = true;
+                    }
+
+                    if (!oldPackageWithVersion.IsEmpty())
+                    {
+                        hintPath.InnerText = hintPath.InnerText.Replace(oldPackageWithVersion, newPackageWithVersion);
+                        shouldUpdate = true;
+                    }
                 }
             }
+
+            if (shouldUpdate && !skipUpdate)
+                doc.Save(GetFilePathFromBaseUri(doc.BaseURI));
 
             return doc;
         }
 
-        public static XmlDocument UpdatePackageConfig(this XmlDocument doc, string packageID, string packageVersion)
+        public static XmlDocument UpdatePackageConfig(this XmlDocument doc, string packageID, string packageVersion, bool skipUpdate = false)
         {
+            var shouldUpdate = false;
+
             var packageNodes = doc.SelectNodes("//package");
-            
+
             foreach (XmlElement node in packageNodes)
             {
                 var id = node.Attributes["id"]?.InnerText;
@@ -60,9 +76,16 @@ namespace SugarRush
                 if (id == packageID)
                 {
                     var version = node.Attributes["version"];
-                    version.InnerText = packageVersion;
+                    if (version.InnerText != packageVersion)
+                    {
+                        version.InnerText = packageVersion;
+                        shouldUpdate = true;
+                    }
                 }
             }
+
+            if (shouldUpdate && !skipUpdate)
+                doc.Save(GetFilePathFromBaseUri(doc.BaseURI));
 
             return doc;
         }
@@ -77,9 +100,12 @@ namespace SugarRush
             {
                 var oldPackageWithVersion = GetPackageWithVersionFromHintPath(text);
 
-                var updatedText = text.Replace(oldPackageWithVersion, newPackageWithVersion);
+                if (oldPackageWithVersion != newPackageWithVersion)
+                {
+                    var updatedText = text.Replace(oldPackageWithVersion, newPackageWithVersion);
 
-                File.WriteAllText(file.FullName, updatedText);
+                    File.WriteAllText(file.FullName, updatedText);
+                }
             }
 
             return file;
@@ -124,7 +150,7 @@ namespace SugarRush
             return config;
         }
 
-        public static IEnumerable<FileInfo> FilterFiles(FileInfo[] files, HashSet<string> exclusionPaths)
+        public static IEnumerable<FileInfo> FilterFiles(IEnumerable<FileInfo> files, HashSet<string> exclusionPaths)
         {
             return files.Where(file => !exclusionPaths.Contains(file.DirectoryName));
         }
@@ -146,9 +172,27 @@ namespace SugarRush
             return GetFiles(folderPath, "*.csproj");
         }
 
+        public static FileInfo[] GetRefreshFiles(string folderPath)
+        {
+            return GetFiles(folderPath, "*.refresh");
+        }
+
+        public static FileInfo[] GetPackageFiles(string folderPath)
+        {
+            return GetFiles(folderPath, "*packages.config");
+        }
+
         public static FileInfo[] GetFiles(string folderPath, string extension)
         {
             return new DirectoryInfo(folderPath).GetFiles(extension, SearchOption.AllDirectories);
+        }
+
+        public static XmlDocument GetXmlDoc(string fullName)
+        {
+            var doc = new XmlDocument();
+            doc.Load(fullName);
+
+            return doc;
         }
 
         private static string GetPackageIdFromIncludeAttribute(XmlAttribute includeAttribute)
@@ -165,6 +209,11 @@ namespace SugarRush
         {
             return Regex.Match(text, @"\\(?<packageID>.*?)\.dll", RegexOptions.RightToLeft)
                 .Groups["packageID"].Value;
+        }
+
+        private static string GetFilePathFromBaseUri(string baseUri)
+        {
+            return baseUri.Split(new string[] { @"file:///" }, StringSplitOptions.None)[1];
         }
     }
 }
