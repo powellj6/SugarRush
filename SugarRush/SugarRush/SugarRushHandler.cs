@@ -14,7 +14,7 @@ namespace SugarRush
 {
     public static class SugarRushHandler
     {
-        public static XmlDocument UpdateCsProjFile(this XmlDocument doc, string newPackageWithVersion, 
+        public static void UpdateCsProjFile(this XmlDocument doc, string newPackageWithVersion, 
             Dictionary<string, System.Reflection.AssemblyName> assDic, bool skipUpdate = false)
         {
             var shouldUpdate = false;
@@ -41,13 +41,14 @@ namespace SugarRush
                     if (hintPath == null)
                         continue;
 
-                    var oldPackageWithVersion = GetPackageWithVersionFromHintPath(hintPath.InnerText);
-
                     if (includeAttribute.InnerText.Contains("Version="))
                     {
-                        includeAttribute.InnerText = ass.FullName;
+                        var version = GetVersionFromIncludeNode(includeAttribute.InnerText);
+                        includeAttribute.InnerText = includeAttribute.InnerText.Replace(version, ass.Version.ToString());
                         shouldUpdate = true;
                     }
+
+                    var oldPackageWithVersion = GetPackageWithVersionFromHintPath(hintPath.InnerText);
 
                     if (!oldPackageWithVersion.IsEmpty())
                     {
@@ -59,11 +60,9 @@ namespace SugarRush
 
             if (shouldUpdate && !skipUpdate)
                 doc.Save(GetFilePathFromBaseUri(doc.BaseURI));
-
-            return doc;
         }
 
-        public static XmlDocument UpdatePackageConfig(this XmlDocument doc, string packageID, string packageVersion, bool skipUpdate = false)
+        public static void UpdatePackageConfig(this XmlDocument doc, string packageID, string packageVersion, bool skipUpdate = false)
         {
             var shouldUpdate = false;
 
@@ -86,11 +85,9 @@ namespace SugarRush
 
             if (shouldUpdate && !skipUpdate)
                 doc.Save(GetFilePathFromBaseUri(doc.BaseURI));
-
-            return doc;
         }
 
-        public static FileInfo UpdateRefreshFile(this FileInfo file, string newPackageWithVersion, Dictionary<string, System.Reflection.AssemblyName> assDic)
+        public static void UpdateRefreshFile(this FileInfo file, string newPackageWithVersion, Dictionary<string, System.Reflection.AssemblyName> assDic)
         {
             string text = File.ReadAllText(file.FullName);
 
@@ -104,11 +101,10 @@ namespace SugarRush
                 {
                     var updatedText = text.Replace(oldPackageWithVersion, newPackageWithVersion);
 
+                    //TODO: Override/Fix this so the referenced file we're testing with doesn't get written to, screwing future tests
                     File.WriteAllText(file.FullName, updatedText);
                 }
             }
-
-            return file;
         }
 
         public static SugarRushConfiguration GetConfiguration()
@@ -144,7 +140,7 @@ namespace SugarRush
             if (!errorMessages.IsEmpty())
             {
                 config.IsInvalid = true;
-                config.Message = string.Join(",", errorMessages);
+                config.Message = string.Join(", ", errorMessages);
             }
 
             return config;
@@ -200,7 +196,12 @@ namespace SugarRush
             return includeAttribute.InnerText.Split(new char[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries)[0];
         }
 
-        private static string GetPackageWithVersionFromHintPath(string hintPath)
+        private static string GetVersionFromIncludeNode(string includeString)
+        {
+            return Regex.Match(includeString, @"Version=(?<version>.*?),").Groups["version"].Value;
+        }
+
+    private static string GetPackageWithVersionFromHintPath(string hintPath)
         {
             return Regex.Match(hintPath, @"\\packages\\(?<packageWithVersion>.*?)\\lib").Groups["packageWithVersion"].Value;
         }
