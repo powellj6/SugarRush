@@ -15,5 +15,13 @@ namespace SugarRush
 
             return originalString.Remove(startIndex, removeCount).Insert(startIndex, replaceValue);
         }
+
+        public static void ForEach<T>(this IEnumerable<T> enumeration, Action<T> action)
+        {
+            foreach (T item in enumeration)
+            {
+                action(item);
+            }
+        }
     }
 }

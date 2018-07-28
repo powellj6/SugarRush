@@ -32,7 +32,7 @@ namespace SugarRushTests
         }
 
         [TestMethod]
-        public void ShouldValidateConfiguration()
+        public void ShouldValidateTrueConfiguration()
         {
             var config = new SugarRushConfiguration {
                 folderPath = @"C:\Some\Random\Bull",
@@ -41,9 +41,20 @@ namespace SugarRushTests
                 packageVersion = "SomePackage-1.2.3"
             };
 
-            SugarRush.SugarRushHandler.ValidateConfiguration(ref config);
+            Assert.IsTrue(SugarRushHandler.IsValidConfig(config));
+        }
 
-            Assert.IsFalse(config.IsInvalid);
+        [TestMethod]
+        public void ShouldValidateFalseConfiguration()
+        {
+            var config = new SugarRushConfiguration
+            {
+                folderPath = @"C:\Some\Random\Bull",
+                nugetRepoUrl = "SomeBullRepo.com",
+                packageID = "SomePackage"
+            };
+
+            Assert.IsFalse(SugarRushHandler.IsValidConfig(config));
         }
 
         [TestMethod]
@@ -52,7 +63,7 @@ namespace SugarRushTests
             var updatedDoc = GetXmlDoc("CsProjExample1.csproj");
             var expectedDoc = GetXmlDoc("CsProjOnlyUpdateHintPath.csproj");
             var assList = GetAssemblyNames(_dir + @"\Resources\DLLs\AjaxControlToolkit.dll");
-            var assDic = assList.ToDictionary(k => k.Name, v => v);
+            var assDic = assList.ToDictionary(k => k.Name, v => v.Version.ToString());
 
             updatedDoc.UpdateCsProjFile("Domain.NettiersDAL.1.0.340", assDic, true);
 
@@ -65,7 +76,7 @@ namespace SugarRushTests
             var updatedDoc = GetXmlDoc("CsProjExample1.csproj");
             var expectedDoc = GetXmlDoc("CsProjUpdateHintPathAndReferenceVersion.csproj");
             var assList = GetAssemblyNames(_dir + @"\Resources\DLLs\Couchbase.dll", _dir + @"\Resources\DLLs\Enyim.Caching.dll");
-            var assDic = assList.ToDictionary(k => k.Name, v => v);
+            var assDic = assList.ToDictionary(k => k.Name, v => v.Version.ToString());
 
             updatedDoc.UpdateCsProjFile("CouchbaseNetClient.1.3.10", assDic, true);
 
@@ -89,7 +100,7 @@ namespace SugarRushTests
             var updatedFile = SugarRushHandler.GetFiles(_dir, "*.refresh").FirstOrDefault(f => f.Name == "RefreshFileExample1.dll.refresh");
             var expectedFile = SugarRushHandler.GetFiles(_dir, "*.refresh").FirstOrDefault(f => f.Name == "RefreshFileUpdatePackageVersion.dll.refresh");
             var assList = GetAssemblyNames(_dir + @"\Resources\DLLs\Couchbase.dll", _dir + @"\Resources\DLLs\Enyim.Caching.dll");
-            var assDic = assList.ToDictionary(k => k.Name, v => v);
+            var assDic = assList.ToDictionary(k => k.Name, v => v.Version.ToString());
 
             updatedFile.UpdateRefreshFile("CouchbaseNetClient.1.3.10", assDic);
 

@@ -15,7 +15,7 @@ namespace SugarRush
     public static class SugarRushHandler
     {
         public static void UpdateCsProjFile(this XmlDocument doc, string newPackageWithVersion, 
-            Dictionary<string, System.Reflection.AssemblyName> assDic, bool skipUpdate = false)
+            Dictionary<string, string> assDic, bool skipUpdate = false)
         {
             var shouldUpdate = false;
 
@@ -32,9 +32,9 @@ namespace SugarRush
                 {
                     var currentPackageID = GetPackageIdFromIncludeAttribute(includeAttribute);
 
-                    System.Reflection.AssemblyName ass;
+                    string assVersion;
 
-                    if (!assDic.TryGetValue(currentPackageID, out ass))
+                    if (!assDic.TryGetValue(currentPackageID, out assVersion))
                         continue;
 
                     var hintPath = node.GetElementsByTagName("HintPath")?[0];
@@ -44,7 +44,7 @@ namespace SugarRush
                     if (includeAttribute.InnerText.Contains("Version="))
                     {
                         var version = GetVersionFromIncludeNode(includeAttribute.InnerText);
-                        includeAttribute.InnerText = includeAttribute.InnerText.Replace(version, ass.Version.ToString());
+                        includeAttribute.InnerText = includeAttribute.InnerText.Replace(version, assVersion);
                         shouldUpdate = true;
                     }
 
@@ -87,7 +87,7 @@ namespace SugarRush
                 doc.Save(GetFilePathFromBaseUri(doc.BaseURI));
         }
 
-        public static void UpdateRefreshFile(this FileInfo file, string newPackageWithVersion, Dictionary<string, System.Reflection.AssemblyName> assDic)
+        public static void UpdateRefreshFile(this FileInfo file, string newPackageWithVersion, Dictionary<string, string> assDic)
         {
             string text = File.ReadAllText(file.FullName);
 
@@ -107,9 +107,26 @@ namespace SugarRush
             }
         }
 
+        public static bool IsValidConfig(SugarRushConfiguration config)
+        {
+            if (config.folderPath.IsEmpty())
+                return false;
+
+            if (config.packageID.IsEmpty())
+                return false;
+
+            if (config.packageVersion.IsEmpty())
+                return false;
+
+            if (config.nugetRepoUrl.IsEmpty())
+                return false;
+
+            return true;
+        }
+
         public static SugarRushConfiguration GetConfiguration()
         {
-            var config = new SugarRushConfiguration
+            return new SugarRushConfiguration
             {
                 folderPath = ConfigurationManager.AppSettings["folderPath"],
                 exclusionPaths = new HashSet<string>(ConfigurationManager.AppSettings["exclusionPaths"].Split(',')),
@@ -117,11 +134,9 @@ namespace SugarRush
                 packageVersion = ConfigurationManager.AppSettings["packageVersion"],
                 nugetRepoUrl = ConfigurationManager.AppSettings["nugetRepoUrl"]
             };
-
-            return ValidateConfiguration(ref config);
         }
 
-        public static SugarRushConfiguration ValidateConfiguration(ref SugarRushConfiguration config)
+        public static List<string> GetValidationErrors(SugarRushConfiguration config)
         {
             var errorMessages = new List<string>();
 
@@ -137,13 +152,7 @@ namespace SugarRush
             if (config.nugetRepoUrl.IsEmpty())
                 errorMessages.Add("Missing nugetRepoUrl");
 
-            if (!errorMessages.IsEmpty())
-            {
-                config.IsInvalid = true;
-                config.Message = string.Join(", ", errorMessages);
-            }
-
-            return config;
+            return errorMessages;
         }
 
         public static IEnumerable<FileInfo> FilterFiles(IEnumerable<FileInfo> files, HashSet<string> exclusionPaths)

@@ -11,9 +11,7 @@ namespace SugarRush
 {
     class Program
     {
-        //TODO: Don't update/save file if nothing has changed
-        //TODO: Also, change dir below to somewhere conventionally "temp"
-        public static string _packagesFolder = @"C:\Temp\NugetPackages\";
+        public static string _packagesFolder = ConfigurationManager.AppSettings["packageDownloadFolder"];
         static void Main(string[] args)
         {
             try
@@ -21,13 +19,17 @@ namespace SugarRush
                 Logc("Getting configuration...");
                 var config = SugarRushHandler.GetConfiguration();
 
-                if (config.IsInvalid)
+                if (!SugarRushHandler.IsValidConfig(config))
                 {
-                    Logc("Invalid configuration: " + config.Message);
+                    var errors = SugarRushHandler.GetValidationErrors(config);
+                    Logc("Invalid configuration: " + string.Join(", ", errors));
                     return;
                 }
+                
+                LogConfig(config);
 
-                Logc("Getting nuget package...");
+                Logc($"Getting nuget package: {config.packageID}.{config.packageVersion}");
+
                 var package = SugarRushHandler.GetPackage(config);
 
                 if (package == null)
@@ -38,39 +40,20 @@ namespace SugarRush
 
                 Logc("Getting csproj files...");
                 var projFiles = SugarRushHandler.FilterFiles(SugarRushHandler.GetCsProjFiles(config.folderPath), config.exclusionPaths);
+
                 Logc("Getting Refresh files...");
                 var refreshFiles = SugarRushHandler.FilterFiles(SugarRushHandler.GetRefreshFiles(config.folderPath), config.exclusionPaths);
+
                 Logc("Getting package.config files...");
                 var packageFiles = SugarRushHandler.FilterFiles(SugarRushHandler.GetPackageFiles(config.folderPath), config.exclusionPaths);
 
                 DownloadNugetPackage(package, config.nugetRepoUrl);
 
-                var dir = Path.GetFullPath($"{_packagesFolder}\\{package.GetFullName().Replace(' ', '.')}");
+                var assDic = GetAssemblyReferenceDic(package);
 
-                //TODO: Not really using anything in the assembly besides "FullName".
-                //Can probably just have Dictionary<dll name, FullName>
-                var assDic = package.AssemblyReferences
-                    .Select(ar => AssemblyName.GetAssemblyName($"{dir}\\{ar.Path}"))
-                    .ToDictionary(k => k.Name, v => v);
-
-                Parallel.ForEach<FileInfo>(projFiles, pf =>
-                {
-                    Console.WriteLine("Updating file: " + pf.FullName);
-                    var doc = SugarRushHandler.GetXmlDoc(pf.FullName);
-                    doc.UpdateCsProjFile(config.packageID + "." + config.packageVersion, assDic);
-                });
-
-                Parallel.ForEach<FileInfo>(refreshFiles, rf =>
-                {
-                    Console.WriteLine("Updating file: " + rf.FullName);
-                    rf.UpdateRefreshFile(config.packageID + "." + config.packageVersion, assDic);
-                });
-
-                Parallel.ForEach<FileInfo>(packageFiles, pf => {
-                    Console.WriteLine("Updating file: " + pf.FullName);
-                    var doc = SugarRushHandler.GetXmlDoc(pf.FullName);
-                    doc.UpdatePackageConfig(config.packageID, config.packageVersion);
-                });
+                UpdateProjFiles(projFiles, config, assDic);
+                UpdateRefreshFiles(projFiles, config, assDic);
+                UpdatePackageFiles(projFiles, config, assDic);
             }
 
             catch (Exception exc)
@@ -79,11 +62,47 @@ namespace SugarRush
             }
         }
 
+        private static void UpdateProjFiles(IEnumerable<FileInfo> files, SugarRushConfiguration config, Dictionary<string, string> assDic)
+        {
+            Parallel.ForEach<FileInfo>(files, pf =>
+            {
+                Console.WriteLine("Updating file: " + pf.FullName);
+                var doc = SugarRushHandler.GetXmlDoc(pf.FullName);
+                doc.UpdateCsProjFile(config.packageID + "." + config.packageVersion, assDic);
+            });
+        }
+
+        private static void UpdateRefreshFiles(IEnumerable<FileInfo> files, SugarRushConfiguration config, Dictionary<string, string> assDic)
+        {
+            Parallel.ForEach<FileInfo>(files, rf =>
+            {
+                Console.WriteLine("Updating file: " + rf.FullName);
+                rf.UpdateRefreshFile(config.packageID + "." + config.packageVersion, assDic);
+            });
+        }
+
+        private static void UpdatePackageFiles(IEnumerable<FileInfo> files, SugarRushConfiguration config, Dictionary<string, string> assDic)
+        {
+            Parallel.ForEach<FileInfo>(files, pf => {
+                Console.WriteLine("Updating file: " + pf.FullName);
+                var doc = SugarRushHandler.GetXmlDoc(pf.FullName);
+                doc.UpdatePackageConfig(config.packageID, config.packageVersion);
+            });
+        }
+
+        private static Dictionary<string, string> GetAssemblyReferenceDic(IPackage package)
+        {
+            var dir = Path.GetFullPath($"{_packagesFolder}\\{package.GetFullName().Replace(' ', '.')}");
+
+            return package.AssemblyReferences
+                .Select(ar => AssemblyName.GetAssemblyName($"{dir}\\{ar.Path}"))
+                .ToDictionary(k => k.Name, v => v.Version.ToString());
+        }
+
         private static void DownloadNugetPackage(IPackage package, string repoUrl)
         {
             IPackageRepository packageRepository = PackageRepositoryFactory.Default.CreateRepository(repoUrl);
             PackageManager packageManager = new PackageManager(packageRepository, _packagesFolder);
-            
 
             packageManager.InstallPackage(package, true, true, true);
         }
@@ -96,17 +115,42 @@ namespace SugarRush
 
         private static void Log(string message)
         {
-            var dPath = ConfigurationManager.AppSettings["logFilePath"];
+            var dirPath = ConfigurationManager.AppSettings["logFilePath"];
 
-            var path = Path.Combine(dPath, "Log.txt");
+            var filePath = Path.Combine(dirPath, "Log.txt");
 
-            if (!Directory.Exists(path))
-                Directory.CreateDirectory(dPath);
+            if (!Directory.Exists(filePath))
+                Directory.CreateDirectory(dirPath);
 
-            using (StreamWriter tw = new StreamWriter(path, true))
+            using (StreamWriter tw = new StreamWriter(filePath, true))
             {
                 tw.WriteLine(DateTime.Now + ": " + message);
             }
+        }
+
+        private static void LogConfig(SugarRushConfiguration config)
+        {
+            Logc($"Config: ");
+
+            config.GetType().GetProperties()
+                .ForEach(x => {
+                    var value = x.GetValue(config);
+
+                    if (value is HashSet<string>)
+                    {
+                        var set = (HashSet<string>)value;
+
+                        Logc($"  {x.Name}: ");
+                        foreach (var setValue in set)
+                        {
+                            Logc($"    {setValue}");
+                        }
+                    }
+
+                    else
+                        Logc($"  {x.Name}: {value}");
+
+                });
         }
     }
 }

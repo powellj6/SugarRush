@@ -13,7 +13,5 @@ namespace SugarRush
         public string packageID { get; set; }
         public string packageVersion { get; set; }
         public string nugetRepoUrl { get; set; }
-        public bool IsInvalid { get; set; }
-        public string Message { get; set; }
     }
 }
