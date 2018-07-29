@@ -60,51 +60,51 @@ namespace SugarRushTests
         [TestMethod]
         public void ShouldUpdateHintPathInCsProjFile()
         {
-            var updatedDoc = GetXmlDoc("CsProjExample1.csproj");
+            var docToUpdate = GetXmlDoc("CsProjExample1.csproj");
             var expectedDoc = GetXmlDoc("CsProjOnlyUpdateHintPath.csproj");
             var assList = GetAssemblyNames(_dir + @"\Resources\DLLs\AjaxControlToolkit.dll");
             var assDic = assList.ToDictionary(k => k.Name, v => v.Version.ToString());
 
-            updatedDoc.UpdateCsProjFile("Domain.NettiersDAL.1.0.340", assDic, true);
+            docToUpdate.UpdateCsProjFile("Domain.NettiersDAL.1.0.340", assDic, true);
 
-            Assert.AreEqual(expectedDoc.OuterXml, updatedDoc.OuterXml);
+            Assert.AreEqual(expectedDoc.OuterXml, docToUpdate.OuterXml);
         }
 
         [TestMethod]
         public void ShouldUpdateHintPathAndReferenceVersionsInCsProjFile()
         {
-            var updatedDoc = GetXmlDoc("CsProjExample1.csproj");
+            var docToUpdate = GetXmlDoc("CsProjExample1.csproj");
             var expectedDoc = GetXmlDoc("CsProjUpdateHintPathAndReferenceVersion.csproj");
             var assList = GetAssemblyNames(_dir + @"\Resources\DLLs\Couchbase.dll", _dir + @"\Resources\DLLs\Enyim.Caching.dll");
             var assDic = assList.ToDictionary(k => k.Name, v => v.Version.ToString());
 
-            updatedDoc.UpdateCsProjFile("CouchbaseNetClient.1.3.10", assDic, true);
+            docToUpdate.UpdateCsProjFile("CouchbaseNetClient.1.3.10", assDic, true);
 
-            Assert.AreEqual(expectedDoc.OuterXml, updatedDoc.OuterXml);
+            Assert.AreEqual(expectedDoc.OuterXml, docToUpdate.OuterXml);
         }
 
         [TestMethod]
         public void ShouldUpdatePackageVersionInPackagesConfig()
         {
-            var updatedDoc = GetXmlDoc("PackageConfigExample1.packages.config");
+            var docToUpdate = GetXmlDoc("PackageConfigExample1.packages.config");
             var expectedDoc = GetXmlDoc("PackageConfigUpdatePackageVersion.packages.config");
 
-            updatedDoc.UpdatePackageConfig("CouchbaseNetClient", "1.3.10", true);
+            docToUpdate.UpdatePackageConfig("CouchbaseNetClient", "1.3.10", true);
 
-            Assert.AreEqual(expectedDoc.OuterXml, updatedDoc.OuterXml);
+            Assert.AreEqual(expectedDoc.OuterXml, docToUpdate.OuterXml);
         }
 
         [TestMethod]
         public void ShouldUpdateVersionInRefreshFile()
         {
-            var updatedFile = SugarRushHandler.GetFiles(_dir, "*.refresh").FirstOrDefault(f => f.Name == "RefreshFileExample1.dll.refresh");
+            var fileToUpdate = SugarRushHandler.GetFiles(_dir, "*.refresh").FirstOrDefault(f => f.Name == "RefreshFileExample1.dll.refresh");
             var expectedFile = SugarRushHandler.GetFiles(_dir, "*.refresh").FirstOrDefault(f => f.Name == "RefreshFileUpdatePackageVersion.dll.refresh");
             var assList = GetAssemblyNames(_dir + @"\Resources\DLLs\Couchbase.dll", _dir + @"\Resources\DLLs\Enyim.Caching.dll");
             var assDic = assList.ToDictionary(k => k.Name, v => v.Version.ToString());
 
-            updatedFile.UpdateRefreshFile("CouchbaseNetClient.1.3.10", assDic);
+            fileToUpdate.UpdateRefreshFile("CouchbaseNetClient.1.3.10", assDic);
 
-            Assert.AreEqual(System.IO.File.ReadAllText(updatedFile.FullName), System.IO.File.ReadAllText(expectedFile.FullName));
+            Assert.AreEqual(System.IO.File.ReadAllText(fileToUpdate.FullName), System.IO.File.ReadAllText(expectedFile.FullName));
         }
 
         private List<AssemblyName> GetAssemblyNames(params string[] paths)

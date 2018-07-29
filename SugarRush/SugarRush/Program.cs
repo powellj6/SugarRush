@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -11,54 +12,64 @@ namespace SugarRush
 {
     class Program
     {
-        public static string _packagesFolder = ConfigurationManager.AppSettings["packageDownloadFolder"];
+        private static string _packagesFolder = ConfigurationManager.AppSettings["packageDownloadFolder"];
+        private static Action<string> _log = Logc();
         static void Main(string[] args)
         {
             try
             {
-                Logc("Getting configuration...");
+                var sw = new Stopwatch();
+                sw.Start();
+
+                _log("Getting configuration...");
                 var config = SugarRushHandler.GetConfiguration();
 
                 if (!SugarRushHandler.IsValidConfig(config))
                 {
                     var errors = SugarRushHandler.GetValidationErrors(config);
-                    Logc("Invalid configuration: " + string.Join(", ", errors));
+                    _log("Invalid configuration: " + string.Join(", ", errors));
                     return;
                 }
                 
                 LogConfig(config);
 
-                Logc($"Getting nuget package: {config.packageID}.{config.packageVersion}");
-
+                _log($"Getting nuget package: {config.packageID}.{config.packageVersion}");
                 var package = SugarRushHandler.GetPackage(config);
 
                 if (package == null)
                 {
-                    Logc("Could not find any nuget package by packageID: " + config.packageID);
+                    _log($"Could not find nuget package \"{config.packageID}\" by version \"{config.packageVersion}\"" + config.packageID);
                     return;
                 }
 
-                Logc("Getting csproj files...");
+                _log("Getting csproj files...");
                 var projFiles = SugarRushHandler.FilterFiles(SugarRushHandler.GetCsProjFiles(config.folderPath), config.exclusionPaths);
 
-                Logc("Getting Refresh files...");
+                _log("Getting Refresh files...");
                 var refreshFiles = SugarRushHandler.FilterFiles(SugarRushHandler.GetRefreshFiles(config.folderPath), config.exclusionPaths);
 
-                Logc("Getting package.config files...");
+                _log("Getting package.config files...");
                 var packageFiles = SugarRushHandler.FilterFiles(SugarRushHandler.GetPackageFiles(config.folderPath), config.exclusionPaths);
 
+                _log("Downloading nuget package locally...");
                 DownloadNugetPackage(package, config.nugetRepoUrl);
 
                 var assDic = GetAssemblyReferenceDic(package);
 
+                _log("Updating files...");
                 UpdateProjFiles(projFiles, config, assDic);
                 UpdateRefreshFiles(projFiles, config, assDic);
                 UpdatePackageFiles(projFiles, config, assDic);
+
+                sw.Stop();
+                _log("Finished updating");
+                _log("Ellapsed time: " + sw.Elapsed);
+
             }
 
             catch (Exception exc)
             {
-                Logc(String.Format("Something went wrong: Message: {0}, StackTrace: {1} ", exc.Message, exc.StackTrace));
+                _log(String.Format($"Something went wrong: {exc.Message}"));
             }
         }
 
@@ -107,30 +118,29 @@ namespace SugarRush
             packageManager.InstallPackage(package, true, true, true);
         }
 
-        private static void Logc(string message)
-        {
-            Console.WriteLine(message);
-            Log(message);
-        }
-
-        private static void Log(string message)
+        private static Action<string> Logc()
         {
             var dirPath = ConfigurationManager.AppSettings["logFilePath"];
 
             var filePath = Path.Combine(dirPath, "Log.txt");
 
-            if (!Directory.Exists(filePath))
+            if (!Directory.Exists(dirPath))
                 Directory.CreateDirectory(dirPath);
 
-            using (StreamWriter tw = new StreamWriter(filePath, true))
-            {
-                tw.WriteLine(DateTime.Now + ": " + message);
-            }
+            Action<string> act = delegate (string message) {
+                using (StreamWriter tw = new StreamWriter(filePath, true))
+                {
+                    tw.WriteLine(DateTime.Now + ": " + message);
+                }
+                Console.WriteLine(message);
+            };
+
+            return act;
         }
 
         private static void LogConfig(SugarRushConfiguration config)
         {
-            Logc($"Config: ");
+            _log($"Config: ");
 
             config.GetType().GetProperties()
                 .ForEach(x => {
@@ -140,15 +150,15 @@ namespace SugarRush
                     {
                         var set = (HashSet<string>)value;
 
-                        Logc($"  {x.Name}: ");
+                        _log($"  {x.Name}: ");
                         foreach (var setValue in set)
                         {
-                            Logc($"    {setValue}");
+                            _log($"    {setValue}");
                         }
                     }
 
                     else
-                        Logc($"  {x.Name}: {value}");
+                        _log($"  {x.Name}: {value}");
 
                 });
         }
