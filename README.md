@@ -7,7 +7,7 @@ Quickly update nuget package references in large .NET projects.
 
 ### Run ###
 
-Currently set up to only be run after building, either in debug or release mode. `cd` into the folder containing the `SugarRush.exe`, update App.config, and then run the exe from the command line.
+`cd` into the folder containing `SugarRush.exe`, update App.config, and then run the exe from the command line.
 
 App.config example:
 ```
