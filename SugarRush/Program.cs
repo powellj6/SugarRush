@@ -58,8 +58,8 @@ namespace SugarRush
 
                 _log("Updating files...");
                 UpdateProjFiles(projFiles, config, assDic);
-                UpdateRefreshFiles(projFiles, config, assDic);
-                UpdatePackageFiles(projFiles, config, assDic);
+                UpdateRefreshFiles(refreshFiles, config, assDic);
+                UpdatePackageFiles(packageFiles, config, assDic);
 
                 sw.Stop();
                 _log("Finished updating");
