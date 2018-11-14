@@ -3,11 +3,11 @@ Sugar Rush Console App
 
 ### Description ###
 
-This is a glorified text find-and-replace for quickly update nuget package references in large .NET projects.
-Will find and update `csproj`, `refresh`, and `packages.config` files. Build your project after running to 
+This is a glorified text find-and-replace for quickly updating nuget package references in large .NET projects.
+It will find and update `csproj`, `refresh`, and `packages.config` files. Build your project after running to 
 actually download and update the packages.
 
-## Note ##
+### Note ###
 In it's current state, it will only update the text for the package and it's direct assembly references. It will not update
 or resolve dependencies and/or their sub-dependencies. If you know you only need to update some text for your package
 and it's direct assemblies, use this.
@@ -16,7 +16,7 @@ and it's direct assemblies, use this.
 
 `cd` into the folder containing `SugarRush.exe`, update `SugarRush.exe.config`, and then run the exe.
 
-App.config example:
+SugarRush.exe.config example:
 ```
 <appSettings>
 	<add key="folderPath" value="C:\code\MyProject"/>
